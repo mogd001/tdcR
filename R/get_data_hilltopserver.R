@@ -7,6 +7,7 @@
 #' @import zeallot
 #' @import rapport
 #' @import hillr
+#' @import stringr
 
 
 get_sites <- function() {
@@ -53,7 +54,10 @@ interval_to_offset <- function(interval) {
   if (!is.character(interval)) {
     return(NA)
   } else {
-    if (grepl("hour", interval)) {
+    if (grepl("minute", interval)) {
+      c(n, int) %<-% unlist(str_split(interval, " "))
+      return(minutes(n))
+    } else if (grepl("hour", interval)) {
       return(hours(1))
     } else if (grepl("day", interval)) {
       return(days(1))
@@ -68,7 +72,7 @@ interval_to_offset <- function(interval) {
 }
 
 
-get_data <- function(collection, method, time_interval = "P1Y/now", from = "", to = "", interval = "1 day", alignment = "00:00") {
+get_data <- function(collection, method, time_interval = "P1D/now", from = "", to = "", interval = "1 day", alignment = "00:00") {
   # Function to get data for a Collection from Hilltop Server.
   endpoint <- "http://envdata.tasman.govt.nz/data.hts?"
 
