@@ -1,3 +1,4 @@
+#' @import tidyr
 #' @import dplyr
 #' @import lubridate
 #' @import hms
@@ -6,29 +7,50 @@
 #' @import httr
 #' @import zeallot
 #' @import rapport
-#' @import hillr
 #' @import stringr
 
 
-get_sites <- function() {
-  # Function get Sites from Hillop Server
-  endpoint <- "http://envdata.tasman.govt.nz/data.hts?"
-  sites <- hillr::getHilltopSites(endpoint = endpoint) %>%
+get_sites <- function(latlong = TRUE) {
+  # Function to get Sites from Hilltop Server.
+  url <- "http://envdata.tasman.govt.nz/data.hts?Service=Hilltop&Request=SiteList"
+
+  if (latlong) {
+    url <- paste0(url, "&Location=LatLong")
+  } else { # return easting and northing
+    url <- paste0(url, "&Location=Yes")
+  }
+
+  hilltop_data <- read_xml(url)
+  sites <- xml_find_all(hilltop_data , "Site") %>% xml_attr("Name")
+
+  hilltop_df <- hilltop_data %>%
+    as_list() %>%
     as_tibble() %>%
-    rename_all(tolower) %>%
-    mutate(
-      latitude = as.numeric(latitude),
-      longitude = as.numeric(longitude)
-    )
+    slice(1:n()-1) %>% # drop first two rows
+    slice(3:n()) %>% # drop last row
+    mutate(site = sites) %>%
+    unnest_longer("HilltopServer") %>%
+    transmute(
+      site = site,
+      src = HilltopServer_id,
+      data = as.numeric(unlist(HilltopServer))
+    ) %>%
+    filter(
+      !is.na(src)
+    ) %>%
+    pivot_wider(
+      names_from = src,
+      values_from = data
+    ) %>%
+    rename_all(tolower)
 }
 
 
 get_collections <- function() {
-  # Function to get Collection list from Hilltop Server
+  # Function to get Collection list from Hilltop Server.
   url <- "http://envdata.tasman.govt.nz/data.hts?Service=Hilltop&Request=CollectionList"
 
   hilltop_data <- read_xml(url)
-  #collections <- xpathSApply(xmlParse(hilltop_data), "//Collection", xmlGetAttr, "Name")
   collections <- xml_find_all(hilltop_data , "Collection") %>% xml_attr("Name")
 
   hilltop_df <- hilltop_data %>%
@@ -36,7 +58,7 @@ get_collections <- function() {
     as_tibble() %>%
     mutate(collection = collections) %>%
     unnest_longer("HilltopProject") %>%
-    filter(HilltopProject_id == "Item") %>% # rows without an "Item" have no sites in the collection.
+    filter(HilltopProject_id == "Item") %>% # rows without an "Item" have no sites in the collection
     transmute(collection = collection, data = HilltopProject) %>%
     unnest_wider("data") %>%
     unnest(cols = names(.)) %>%
@@ -50,7 +72,7 @@ get_collections <- function() {
 
 
 interval_to_offset <- function(interval) {
-  # Function to return offset to correct for Hilltops right-bound datetimes
+  # Function to return offset to correct for Hilltops right-bound datetimes.
   if (!is.character(interval)) {
     return(NA)
   } else {
@@ -138,8 +160,7 @@ get_data <- function(collection, method, time_interval = "P1D/now", from = "", t
 
 
 load_ratings <- function(site, start_date, end_date) {
-  # Load ratings for site
-
+  # Function to load ratings for a site.
   endpoint <- "http://envdata.tasman.govt.nz/data.hts?"
 
   measurement <- "Flow"
@@ -189,7 +210,7 @@ load_ratings <- function(site, start_date, end_date) {
 
 
 load_gaugings <- function(site, start_date, end_date) {
-  # Load gaugings for site
+  # Function to load gaugings for a site.
   endpoint <- "http://envdata.tasman.govt.nz/data.hts?"
 
   measurement <- "Flow [Gauging Results]"
