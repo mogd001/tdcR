@@ -19,5 +19,4 @@ Imports:
     httr,
     zeallot,
     rapport,
-    hillr, 
     stringr

@@ -1,2 +1,2 @@
 exportPattern("^[[:alpha:]]+")
-import(tidyr, dplyr, lubridate, hms, XML, xml2, httr, zeallot, rapport, hillr, stringr)
+import(tidyr, dplyr, lubridate, hms, XML, xml2, httr, zeallot, rapport, stringr)

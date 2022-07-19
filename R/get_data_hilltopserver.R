@@ -6,7 +6,6 @@
 #' @import httr
 #' @import zeallot
 #' @import rapport
-#' @import hillr
 #' @import stringr
 
 
