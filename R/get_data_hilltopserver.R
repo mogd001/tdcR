@@ -9,6 +9,7 @@
 #' @import rapport
 #' @import stringr
 
+# TODO - improve function definitions.
 
 get_sites <- function(latlong = TRUE) {
   # Function to get Sites from Hilltop Server.
@@ -94,36 +95,39 @@ interval_to_offset <- function(interval) {
 }
 
 
-get_data <- function(collection, method, time_interval = "P1D/now", from = "", to = "", interval = "1 day", alignment = "00:00") {
+get_data_collection <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?", collection, method = NA, time_interval = NA, from = NA, to = NA, interval = "1 day", alignment = "00:00") {
   # Function to get data for a Collection from Hilltop Server.
-  endpoint <- "http://envdata.tasman.govt.nz/data.hts?"
-
-  statistic <- paste0(
-    "&Method=", method,
-    "&Interval=", interval,
-    "&Alignment=", alignment
-  )
-
-  interval_offset <- interval_to_offset(interval)
-  print(interval_offset)
-
-  if (!is.na(time_interval)) {
-    statistic <- paste0(statistic, "&TimeInterval=", time_interval)
-  } else if (!is.na(from) | !is.na(to)) {
-    statistic <- paste0(statistic, "&From=", from, "&To=", to)
+  if (is.na(method)) {
+    url <- ""
+    interval_offset <- 0
   } else {
-    print("Incorrect time_interval or from/to specified.")
+    url <- paste0(
+      "&Method=", method,
+      "&Interval=", interval,
+      "&Alignment=", alignment
+    )
+    interval_offset <- interval_to_offset(interval)
   }
 
-  statistic <- gsub(" ", "%20", statistic)
+  print(paste0("Datetime offset: ", interval_offset))
+
+  if (!is.na(time_interval)) {
+    url <- paste0(url, "&TimeInterval=", time_interval)
+  } else if (!is.na(from) | !is.na(to)) {
+    url <- paste0(url, "&From=", from, "&To=", to)
+  } else {
+    url <- paste0(url, "&TimeInterval=", "P1D")
+  }
 
   url <-
     paste0(
       endpoint,
       "Service=Hilltop&Request=GetData&Collection=",
-      gsub(" ", "%20", collection),
-      statistic
+      collection,
+      url
     )
+
+  url <- gsub(" ", "%20", url)
   print(url)
 
   hilltop_data <- read_xml(url)
@@ -144,6 +148,57 @@ get_data <- function(collection, method, time_interval = "P1D/now", from = "", t
     transmute(
       site = site,
       datetime = ymd_hms(T, tz = "NZ") - interval_offset,
+      value = as.numeric(I1)
+    ) %>%
+    mutate(
+      year = year(datetime),
+      yday = yday(datetime),
+      month = month(datetime, label = TRUE),
+      year_month = floor_date(datetime, unit = "month"),
+      day = floor_date(datetime, unit = "day"),
+      day_hour = floor_date(datetime, unit = "hour"),
+      date = as_date(datetime),
+      time = as_hms(datetime)
+    )
+}
+
+
+get_data_site_measurement <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?", site, measurement, time_interval = NA, from = NA, to = NA) {
+  # Function to get data for a measurement for a site, between two dates.
+  url <-
+    paste0(
+      endpoint,
+      "Service=Hilltop&Request=GetData",
+      "&Site=", site,
+      "&Measurement=", measurement
+    )
+
+  if (!is.na(time_interval)) {
+    url <- paste0(url, "&TimeInterval=", time_interval)
+  } else if (!is.na(from) | !is.na(to)) {
+    url <- paste0(url, "&From=", from, "&To=", to)
+  } else {
+    url <- paste0(url, "&TimeInterval=", "P1D")
+  }
+
+  url <- gsub(" ", "%20", url)
+  print(url)
+
+  hilltop_data <- read_xml(url)
+
+  hilltop_df <- hilltop_data %>%
+    as_list() %>%
+    as_tibble() %>%
+    slice(-1) %>% # drop first node (Agency not required)
+    unnest_longer("Hilltop") %>%
+    filter(Hilltop_id == "Data") %>%
+    select("Hilltop") %>%
+    unnest(cols = names(.))  %>%
+    unnest_wider("Hilltop") %>%
+    unnest(cols = names(.)) %>%
+    unnest(cols = names(.)) %>%
+    transmute(
+      datetime = ymd_hms(T, tz = "NZ"),
       value = as.numeric(I1)
     ) %>%
     mutate(
