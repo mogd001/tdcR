@@ -286,7 +286,7 @@ load_gaugings <- function(site, start_date, end_date) {
     unnest(cols = names(.)) %>%
     unnest(cols = names(.)) %>%
     unnest(cols = names(.)) %>%
-    mutate(datetime = as.POSIXct(Hilltop, format = "%Y-%m-%dT%H:%M:%S", tz = "UTC")) %>%
+    mutate(datetime = as.POSIXct(Hilltop, format = "%Y-%m-%dT%H:%M:%S", tz = "Etc/GMT+12")) %>%
     select(c(datetime)) %>%
     drop_na(datetime) %>%
     mutate(
