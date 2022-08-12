@@ -147,7 +147,7 @@ get_data_collection <- function(endpoint = "http://envdata.tasman.govt.nz/data.h
     unnest(cols = names(.)) %>%
     transmute(
       site = site,
-      datetime = ymd_hms(T, tz = "UTC") - interval_offset,  # ignore timezone, NZST
+      datetime = ymd_hms(T, tz = "Etc/GMT+12") - interval_offset,  # ignore timezone, NZST
       value = as.numeric(I1)
     ) %>%
     mutate(
@@ -198,7 +198,7 @@ get_data_site_measurement <- function(endpoint = "http://envdata.tasman.govt.nz/
     unnest(cols = names(.)) %>%
     unnest(cols = names(.)) %>%
     transmute(
-      datetime = ymd_hms(T, tz = "UTC"), # ignore timezone, NZST
+      datetime = ymd_hms(T, tz = "Etc/GMT+12"), # ignore timezone, NZST
       value = as.numeric(I1)
     ) %>%
     mutate(
@@ -234,7 +234,7 @@ load_ratings <- function(site, start_date, end_date) {
     filter(HilltopServer_id == "StartTime") %>%
     unnest(cols = names(.)) %>%
     unnest(cols = names(.)) %>%
-    mutate(datetime = as.POSIXct(HilltopServer, format = "%Y-%m-%dT%H:%M:%S", tz = "UTC")) %>%  # ignore timezone, NZST
+    mutate(datetime = as.POSIXct(HilltopServer, format = "%Y-%m-%dT%H:%M:%S", tz = "Etc/GMT+12")) %>%  # ignore timezone, NZST
     rename(start_time = datetime) %>%
     select(start_time)
 
@@ -242,7 +242,7 @@ load_ratings <- function(site, start_date, end_date) {
     filter(HilltopServer_id == "EffectiveTime") %>%
     unnest(cols = names(.)) %>%
     unnest(cols = names(.)) %>%
-    mutate(datetime = as.POSIXct(HilltopServer, format = "%Y-%m-%dT%H:%M:%S", tz = "UTC")) %>%  # ignore timezone, NZST
+    mutate(datetime = as.POSIXct(HilltopServer, format = "%Y-%m-%dT%H:%M:%S", tz = "Etc/GMT+12")) %>%  # ignore timezone, NZST
     rename(effective_time = datetime) %>%
     select(effective_time)
 
@@ -256,8 +256,8 @@ load_ratings <- function(site, start_date, end_date) {
       origin = "rating-change"
     ) %>%
     filter(
-      date > as.Date(start_date, format = "%Y%m%d", tz = "UTC") &  # ignore timezone, NZST
-        date < as.Date(end_date, format = "%Y%m%d", tz = "UTC")  # ignore timezone, NZST
+      date > as.Date(start_date, format = "%Y%m%d", tz = "Etc/GMT+12") &  # ignore timezone, NZST
+        date < as.Date(end_date, format = "%Y%m%d", tz = "Etc/GMT+12")  # ignore timezone, NZST
     ) # filter ratings to analysis period
 
   return(ratings)
@@ -295,8 +295,8 @@ load_gaugings <- function(site, start_date, end_date) {
       date = as.Date(datetime, tz = "UTC"),
     ) %>%
     filter(
-      date > as.Date(start_date, format = "%Y%m%d", tz = "UTC") &  # ignore timezone, NZST
-        date < as.Date(end_date, format = "%Y%m%d", tz = "UTC")  # ignore timezone, NZST
+      date > as.Date(start_date, format = "%Y%m%d", tz = "Etc/GMT+12") &  # ignore timezone, NZST
+        date < as.Date(end_date, format = "%Y%m%d", tz = "Etc/GMT+12")  # ignore timezone, NZST
     ) # filter ratings to analysis period
 
   return(gaugings)
