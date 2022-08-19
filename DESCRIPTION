@@ -1,10 +1,10 @@
 Package: tdcR
 Type: Package
 Title: General TDC R Functions
-Version: 0.1.1
+Version: 0.1.2
 Author: Matt Ogden
 Maintainer: Matt Ogden <matt.ogden@tasman.govt.nz>
-Description: Pulling data from Hilltop Server.
+Description: Pulling data from Hilltop Server and Envmon.
     Hydrology functions.
 License: MIT License
 Encoding: UTF-8
@@ -19,4 +19,5 @@ Imports:
     httr,
     zeallot,
     rapport,
-    stringr
+    stringr,
+    RODBC
