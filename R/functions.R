@@ -24,12 +24,12 @@ get_sites <- function(latlong = TRUE) {
   }
 
   hilltop_data <- read_xml(url)
-  sites <- xml_find_all(hilltop_data , "Site") %>% xml_attr("Name")
+  sites <- xml_find_all(hilltop_data, "Site") %>% xml_attr("Name")
 
   hilltop_df <- hilltop_data %>%
     as_list() %>%
     as_tibble() %>%
-    slice(1:n()-1) %>% # drop first two rows
+    slice(1:n() - 1) %>% # drop first two rows
     slice(3:n()) %>% # drop last row
     mutate(site = sites) %>%
     unnest_longer("HilltopServer") %>%
@@ -54,7 +54,7 @@ get_collections <- function() {
   url <- "http://envdata.tasman.govt.nz/data.hts?Service=Hilltop&Request=CollectionList"
 
   hilltop_data <- read_xml(url)
-  collections <- xml_find_all(hilltop_data , "Collection") %>% xml_attr("Name")
+  collections <- xml_find_all(hilltop_data, "Collection") %>% xml_attr("Name")
 
   hilltop_df <- hilltop_data %>%
     as_list() %>%
@@ -149,7 +149,7 @@ get_data_collection <- function(endpoint = "http://envdata.tasman.govt.nz/data.h
     unnest(cols = names(.)) %>%
     transmute(
       site = site,
-      datetime = ymd_hms(T, tz = "Etc/GMT+12") - interval_offset,  # ignore timezone, NZST
+      datetime = ymd_hms(T, tz = "Etc/GMT+12") - interval_offset, # ignore timezone, NZST
       value = as.numeric(I1)
     ) %>%
     mutate(
@@ -195,7 +195,7 @@ get_data_site_measurement <- function(endpoint = "http://envdata.tasman.govt.nz/
     unnest_longer("Hilltop") %>%
     filter(Hilltop_id == "Data") %>%
     select("Hilltop") %>%
-    unnest(cols = names(.))  %>%
+    unnest(cols = names(.)) %>%
     unnest_wider("Hilltop") %>%
     unnest(cols = names(.)) %>%
     unnest(cols = names(.)) %>%
@@ -236,7 +236,7 @@ load_ratings <- function(site, start_date, end_date) {
     filter(HilltopServer_id == "StartTime") %>%
     unnest(cols = names(.)) %>%
     unnest(cols = names(.)) %>%
-    mutate(datetime = as.POSIXct(HilltopServer, format = "%Y-%m-%dT%H:%M:%S", tz = "Etc/GMT+12")) %>%  # ignore timezone, NZST
+    mutate(datetime = as.POSIXct(HilltopServer, format = "%Y-%m-%dT%H:%M:%S", tz = "Etc/GMT+12")) %>% # ignore timezone, NZST
     rename(start_time = datetime) %>%
     select(start_time)
 
@@ -244,7 +244,7 @@ load_ratings <- function(site, start_date, end_date) {
     filter(HilltopServer_id == "EffectiveTime") %>%
     unnest(cols = names(.)) %>%
     unnest(cols = names(.)) %>%
-    mutate(datetime = as.POSIXct(HilltopServer, format = "%Y-%m-%dT%H:%M:%S", tz = "Etc/GMT+12")) %>%  # ignore timezone, NZST
+    mutate(datetime = as.POSIXct(HilltopServer, format = "%Y-%m-%dT%H:%M:%S", tz = "Etc/GMT+12")) %>% # ignore timezone, NZST
     rename(effective_time = datetime) %>%
     select(effective_time)
 
@@ -254,12 +254,12 @@ load_ratings <- function(site, start_date, end_date) {
       rating = as.double(row.names(.)),
       start_time = round_date(start_time, "5 mins"),
       effective_time = round_date(effective_time, "5 mins"),
-      date = as.Date(start_time, tz = "UTC"),  # ignore timezone, NZST
+      date = as.Date(start_time, tz = "UTC"), # ignore timezone, NZST
       origin = "rating-change"
     ) %>%
     filter(
-      date > as.Date(start_date, format = "%Y%m%d", tz = "Etc/GMT+12") &  # ignore timezone, NZST
-        date < as.Date(end_date, format = "%Y%m%d", tz = "Etc/GMT+12")  # ignore timezone, NZST
+      date > as.Date(start_date, format = "%Y%m%d", tz = "Etc/GMT+12") & # ignore timezone, NZST
+        date < as.Date(end_date, format = "%Y%m%d", tz = "Etc/GMT+12") # ignore timezone, NZST
     ) # filter ratings to analysis period
 
   return(ratings)
@@ -297,8 +297,8 @@ load_gaugings <- function(site, start_date, end_date) {
       date = as.Date(datetime, tz = "UTC"),
     ) %>%
     filter(
-      date > as.Date(start_date, format = "%Y%m%d", tz = "Etc/GMT+12") &  # ignore timezone, NZST
-        date < as.Date(end_date, format = "%Y%m%d", tz = "Etc/GMT+12")  # ignore timezone, NZST
+      date > as.Date(start_date, format = "%Y%m%d", tz = "Etc/GMT+12") & # ignore timezone, NZST
+        date < as.Date(end_date, format = "%Y%m%d", tz = "Etc/GMT+12") # ignore timezone, NZST
     ) # filter ratings to analysis period
 
   return(gaugings)
@@ -343,19 +343,19 @@ tabulate_hirds_data_string <- function(data_string) {
   # Function to map HIRDS string saved in ENVMON database to tibble.
   col_names <-
     c(
-      "ARI",
-      "10 min",
-      "20 min",
-      "30 min",
-      "1 hour",
-      "2 hour",
-      "6 hour",
-      "12 hour",
-      "1 day",
-      "2 day",
-      "3 day",
-      "4 day",
-      "5 day"
+      "ari",
+      "dur_10min",
+      "dur_20min",
+      "dur_30min",
+      "dur_1hour",
+      "dur_2hour",
+      "dur_6hour",
+      "dur_12hour",
+      "dur_1day",
+      "dur_2day",
+      "dur_3day",
+      "dur_4day",
+      "dur_5day"
     )
 
   # Split string according to \r\n rows, then convert rows to double and create dataframe.
@@ -371,15 +371,17 @@ tabulate_hirds_data_string <- function(data_string) {
       v <- append(v, x)
     }
   }
-  m <- t(matrix(v, ncol = n_col))
+  m <- matrix(v, nrow = length(v) / n_col, ncol = n_col, byrow = TRUE)
 
-  # add empty columns to m
-  for (i in 1:(length(col_names) - n_col)) {
-    m <- cbind(m, rep(NA, length(m[, 1])))
+  # add empty columns to m if longer return periods are not defined
+  if (n_col < length(col_names)) {
+    for (i in 1:(length(col_names) - n_col)) {
+      m <- cbind(m, rep(NA, length(m[, 1])))
+    }
   }
 
-  hirds_df <- as_tibble(m)
-  names(hirds_df) <- col_names
+  hirds_df <- as_tibble(m) %>%
+    setNames(col_names)
 
   return(hirds_df)
 }
