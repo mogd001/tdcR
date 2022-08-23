@@ -15,7 +15,7 @@
 ########## HILLTOP SERVER ##########
 get_sites <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?", latlong = TRUE) {
   # Function to get Sites from Hilltop Server.
-  url <- pate0(endpoint, "Service=Hilltop&Request=SiteList")
+  url <- paste0(endpoint, "Service=Hilltop&Request=SiteList")
 
   if (latlong) {
     url <- paste0(url, "&Location=LatLong")
