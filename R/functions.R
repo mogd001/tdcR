@@ -13,9 +13,9 @@
 # TODO - improve function definitions.
 
 ########## HILLTOP SERVER ##########
-get_sites <- function(latlong = TRUE) {
+get_sites <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?", latlong = TRUE) {
   # Function to get Sites from Hilltop Server.
-  url <- "http://envdata.tasman.govt.nz/data.hts?Service=Hilltop&Request=SiteList"
+  url <- pate0(endpoint, "Service=Hilltop&Request=SiteList")
 
   if (latlong) {
     url <- paste0(url, "&Location=LatLong")
@@ -49,9 +49,9 @@ get_sites <- function(latlong = TRUE) {
 }
 
 
-get_collections <- function() {
+get_collections <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?") {
   # Function to get Collection list from Hilltop Server.
-  url <- "http://envdata.tasman.govt.nz/data.hts?Service=Hilltop&Request=CollectionList"
+  url <- paste0(endpoint, "Service=Hilltop&Request=CollectionList")
 
   hilltop_data <- read_xml(url)
   collections <- xml_find_all(hilltop_data, "Collection") %>% xml_attr("Name")
