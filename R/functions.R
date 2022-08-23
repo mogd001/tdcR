@@ -23,6 +23,9 @@ get_sites <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?", latl
     url <- paste0(url, "&Location=Yes")
   }
 
+  url <- gsub(" ", "%20", url)
+  print(url)
+
   hilltop_data <- read_xml(url)
   sites <- xml_find_all(hilltop_data, "Site") %>% xml_attr("Name")
 
@@ -52,6 +55,9 @@ get_sites <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?", latl
 get_collections <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?") {
   # Function to get Collection list from Hilltop Server.
   url <- paste0(endpoint, "Service=Hilltop&Request=CollectionList")
+
+  url <- gsub(" ", "%20", url)
+  print(url)
 
   hilltop_data <- read_xml(url)
   collections <- xml_find_all(hilltop_data, "Collection") %>% xml_attr("Name")
