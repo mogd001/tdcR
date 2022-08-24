@@ -32,8 +32,8 @@ get_sites <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?", latl
   hilltop_df <- hilltop_data %>%
     as_list() %>%
     as_tibble() %>%
-    slice(1:n() - 1) %>% # drop first two rows
-    slice(3:n()) %>% # drop last row
+    slice(1:n() - 1) %>% # drop last row
+    slice((n() - length(sites) + 1):n()) %>% # drop first non-site rows
     mutate(site = sites) %>%
     unnest_longer("HilltopServer") %>%
     transmute(
