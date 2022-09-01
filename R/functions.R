@@ -117,7 +117,7 @@ get_data_collection <- function(endpoint = "http://envdata.tasman.govt.nz/data.h
     interval_offset <- interval_to_offset(interval)
   }
 
-  print(paste0("Datetime offset: ", interval_offset))
+  #print(paste0("Datetime offset: ", interval_offset))
 
   if (!is.na(time_interval)) {
     url <- paste0(url, "&TimeInterval=", time_interval)
@@ -155,7 +155,7 @@ get_data_collection <- function(endpoint = "http://envdata.tasman.govt.nz/data.h
     unnest(cols = names(.)) %>%
     transmute(
       site = site,
-      datetime = ymd_hms(T, tz = "Etc/GMT+12") - interval_offset, # ignore timezone, NZST
+      datetime = ymd_hms(T, tz = "Etc/GMT+12") - interval_offset,
       value = as.numeric(I1)
     ) %>%
     mutate(
@@ -172,7 +172,7 @@ get_data_collection <- function(endpoint = "http://envdata.tasman.govt.nz/data.h
 
 
 get_data_site_measurement <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?", site, measurement, time_interval = NA, from = NA, to = NA) {
-  # Function to get data for a measurement for a site, between two dates.
+  # Function to get data for a measurement for a site.
   url <-
     paste0(
       endpoint,
