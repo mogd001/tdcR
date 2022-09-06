@@ -52,6 +52,28 @@ get_sites <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?", latl
 }
 
 
+get_measurements <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?", site = NA) {
+  # Function to get Measurements from Hilltop Server.  Can call with a site to get measurements
+  # associated with that site.
+  url <- paste0(endpoint, "Service=Hilltop&Request=MeasurementList")
+
+  if (!is.na(site)) {
+    url <- paste0(url, "&Site=", site)
+  }
+
+  url <- gsub(" ", "%20", url)
+  print(url)
+
+  hilltop_data <- read_xml(url)
+  if (is.na(site)) {
+    measurements <- xml_find_all(hilltop_data, "Measurement") %>% xml_attr("Name")
+  } else {
+    measurements <- xml_find_all(hilltop_data, "DataSource") %>% xml_attr("Name")
+  }
+  hilltop_df <- tibble(measurement = measurements)
+}
+
+
 get_collections <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?") {
   # Function to get Collection list from Hilltop Server.
   url <- paste0(endpoint, "Service=Hilltop&Request=CollectionList")
