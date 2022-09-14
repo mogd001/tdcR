@@ -139,7 +139,7 @@ get_data_collection <- function(endpoint = "http://envdata.tasman.govt.nz/data.h
     interval_offset <- interval_to_offset(interval)
   }
 
-  #print(paste0("Datetime offset: ", interval_offset))
+  # print(paste0("Datetime offset: ", interval_offset))
 
   if (!is.na(time_interval)) {
     url <- paste0(url, "&TimeInterval=", time_interval)
@@ -375,7 +375,9 @@ get_lab_data_envmon <- function() {
 
   site_information <- sqlQuery(envmon,
     "SELECT SiteID, Name, Easting, Northing, AuxName1, AuxName2
-     FROM Site", stringsAsFactors = FALSE) %>%
+     FROM Site",
+    stringsAsFactors = FALSE
+  ) %>%
     rename(
       site_id = SiteID,
       site = Name,
@@ -389,7 +391,8 @@ get_lab_data_envmon <- function() {
     "SELECT ResultNumber, SiteID, TestName, TestResultNumeric, NonDetect, TestUnits,
     SampleTakenOn, SourceTable, TestNameGroup
     FROM htsAllSiteData",
-    stringsAsFactors = FALSE) %>%
+    stringsAsFactors = FALSE
+  ) %>%
     rename(
       result_number = ResultNumber,
       site_id = SiteID,
@@ -430,7 +433,9 @@ get_bore_data_envmon <- function() {
     Slot_Size_3, SumpSet,
     Bore_Log, Access_To_Bore, Access_To_Water, Point_Of_Measurement_To_Ground, ValNum,
     DateCreated, Verify, VerifiedBy, VerifyDate, Dead
-    FROM tbl_Bores WHERE Dead IS NULL or Dead = 0", stringsAsFactors = FALSE) %>%
+    FROM tbl_Bores WHERE Dead IS NULL or Dead = 0",
+    stringsAsFactors = FALSE
+  ) %>%
     rename(
       bore_id = BoreID,
       bore_no = Bore_No,
@@ -485,9 +490,11 @@ get_bore_data_envmon <- function() {
       dead = Dead
     )
 
-  site_bore <- sqlQuery(envmon,
+  site_bore <- sqlQuery(
+    envmon,
     "SELECT BoreID, SiteID
-    FROM vw_BoreSite") %>%
+    FROM vw_BoreSite"
+  ) %>%
     rename(
       bore_id = BoreID,
       site_id = SiteID
@@ -495,8 +502,26 @@ get_bore_data_envmon <- function() {
 
   odbcClose(envmon)
 
+  # get aquifer information
+  ncs_string <-
+    "driver={SQL Server};server=TSRVSQL14;database=NCS;trusted_connection=true"
+  ncs <- odbcDriverConnect(ncs_string)
+
+  bore_aquifer <- sqlQuery(
+    ncs,
+    "SELECT BoreID, PrimaryUse, AquiferName FROM GIS.vw_LawaBores"
+  ) %>%
+    rename(
+      bore_id = BoreID,
+      primary_use = PrimaryUse,
+      aquifer = AquiferName,
+    )
+
+  odbcClose(ncs)
+
   bore_information <- bore_information %>%
-    left_join(site_bore, by = "bore_id")
+    left_join(site_bore, by = "bore_id") %>%
+    left_join(bore_aquifer, by = "bore_id")
 
   return(bore_information)
 }
