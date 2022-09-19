@@ -193,15 +193,25 @@ get_data_collection <- function(endpoint = "http://envdata.tasman.govt.nz/data.h
 }
 
 
-get_data_site_measurement <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?", site, measurement, time_interval = NA, from = NA, to = NA) {
+get_data_site_measurement <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?", site, measurement, method = NA, time_interval = NA, from = NA, to = NA, interval = "1 day", alignment = "00:00") {
   # Function to get data for a measurement for a site.
-  url <-
-    paste0(
-      endpoint,
-      "Service=Hilltop&Request=GetData",
-      "&Site=", site,
-      "&Measurement=", measurement
+  url <- paste0(
+    endpoint,
+    "Service=Hilltop&Request=GetData",
+    "&Site=", site,
+    "&Measurement=", measurement
+  )
+
+  if (is.na(method)) {
+    interval_offset <- 0
+  } else {
+    url <- paste0(url,
+      "&Method=", method,
+      "&Interval=", interval,
+      "&Alignment=", alignment
     )
+    interval_offset <- interval_to_offset(interval)
+  }
 
   if (!is.na(time_interval)) {
     url <- paste0(url, "&TimeInterval=", time_interval)
@@ -228,7 +238,7 @@ get_data_site_measurement <- function(endpoint = "http://envdata.tasman.govt.nz/
     unnest(cols = names(.)) %>%
     unnest(cols = names(.)) %>%
     transmute(
-      datetime = ymd_hms(T, tz = "Etc/GMT+12"), # ignore timezone, NZST
+      datetime = ymd_hms(T, tz = "Etc/GMT+12") - interval_offset,
       value = as.numeric(I1)
     ) %>%
     mutate(
