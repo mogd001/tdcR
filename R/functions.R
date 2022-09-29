@@ -1,20 +1,19 @@
-#' @import tidyr
-#' @import dplyr
-#' @import lubridate
-#' @import hms
-#' @import XML
-#' @import xml2
-#' @import httr
-#' @import zeallot
-#' @import rapport
-#' @import stringr
-#' @import RODBC
-
-# TODO - improve function definitions.
-
 ########## HILLTOP SERVER ##########
-get_sites <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?", latlong = TRUE) {
-  # Function to get Sites from Hilltop Server.
+# A collection of wrapper functions for calling hilltop server commands and
+# returning tibbles for subsequent workflows.
+
+#' Get Hilltop Sites
+#'
+#' @description Function to get Sites from Hilltop Server.
+#' @param endpoint A url for the Hilltop endpoint.
+#' @param latlong A logical, TRUE returns EPSG:4326 (WGS) coordinates , EPSG:2193 (NZTM) otherwise.
+#' @return A tibble of sites and their corresponding coordinates.
+#' @examples
+#' get_sites("http://envdata.tasman.govt.nz/data.hts?")
+#' get_sites("http://envdata.tasman.govt.nz/data.hts?", latlong = FALSE)
+get_sites <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?",
+                      latlong = TRUE) {
+
   url <- paste0(endpoint, "Service=Hilltop&Request=SiteList")
 
   if (latlong) {
@@ -52,9 +51,18 @@ get_sites <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?", latl
 }
 
 
-get_measurements <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?", site = NA) {
-  # Function to get Measurements from Hilltop Server.  Can call with a site to get measurements
-  # associated with that site.
+#' Get Hilltop Measurements
+#'
+#' @description Function to get Measurements from Hilltop Server.
+#' @param endpoint A url for the Hilltop endpoint.
+#' @param site A string for the site so to return only measurements associated with that specific site.
+#' @return A tibble of measurements.
+#' @examples
+#' get_measurements("http://envdata.tasman.govt.nz/data.hts?")
+#' get_measurements("http://envdata.tasman.govt.nz/data.hts?", site = "HY Anatoki at Happy Sams")
+get_measurements <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?",
+                             site = NA) {
+
   url <- paste0(endpoint, "Service=Hilltop&Request=MeasurementList")
 
   if (!is.na(site)) {
@@ -74,8 +82,15 @@ get_measurements <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?
 }
 
 
+#' Get Hilltop Collections
+#'
+#' @description Function to get Collections from Hilltop Server.
+#' @param endpoint A url for the Hilltop endpoint.
+#' @return A tibble of collections.
+#' @examples
+#' get_collections("http://envdata.tasman.govt.nz/data.hts?")
 get_collections <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?") {
-  # Function to get Collection list from Hilltop Server.
+
   url <- paste0(endpoint, "Service=Hilltop&Request=CollectionList")
 
   url <- gsub(" ", "%20", url)
@@ -102,31 +117,61 @@ get_collections <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?"
 }
 
 
+#' Interval function to correct for Hilltop's "right-bound" datetimes.
+#'
+#' @param interval a string.
+#' @noRd
 interval_to_offset <- function(interval) {
-  # Function to return offset to correct for Hilltops right-bound datetimes.
+
   if (!is.character(interval)) {
-    return(NA)
+    offset <- NA
   } else {
     if (grepl("minute", interval)) {
       c(n, int) %<-% unlist(str_split(interval, " "))
-      return(minutes(n))
+      offset <- minutes(n)
     } else if (grepl("hour", interval)) {
-      return(hours(1))
+      offset <- hours(1)
     } else if (grepl("day", interval)) {
-      return(days(1))
+      offset <- days(1)
     } else if (grepl("month", interval)) {
-      return(months(1))
+      offest <- months(1)
     } else if (grepl("year", interval)) {
-      return(years(1))
+      offset <- years(1)
     } else {
-      return(NA)
+      offset <- NA
     }
   }
+
+  offset
 }
 
 
-get_data_collection <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?", collection, method = NA, time_interval = NA, from = NA, to = NA, interval = "1 day", alignment = "00:00") {
-  # Function to get data for a Collection from Hilltop Server.
+#' Get Hilltop Data for a Collection
+#'
+#' @description Function to get Data for a Collection from Hilltop Server.
+#' @param endpoint A url for the Hilltop endpoint.
+#' @param collection A string for the collection.
+#' @param method A string for the statistic computed, currently only tested for Total, Average and Extrema.
+#' @param interval A string for the interval over which the "method" is calculated, e.g. "1 day".
+#' @param from A string for the start date.
+#' @param to A string for the end date.
+#' @param time_interval A string for the relative time, e.g. P1Y (Past 1 year). See Hilltop Server documentation
+#' @param alignment See Hilltop Server documentation.
+#' @return A tibble containing the data for each site comprising the collection.
+#' @examples
+#' get_data_collection("http://envdata.tasman.govt.nz/data.hts?", collection = "Rainfall",
+#'       method = "Total", interval = "1 hour", from = "20220101", to = "202207031")
+#' get_data_collection("http://envdata.tasman.govt.nz/data.hts?", collection = "ActiveFlowSites",
+#'       method = "Extrema", interval = "15 minutes", from = "20220101", to = "202207031")
+get_data_collection <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?",
+                                collection,
+                                method = NA,
+                                interval = "1 day",
+                                from = NA,
+                                to = NA,
+                                time_interval = NA,
+                                alignment = "00:00") {
+
   if (is.na(method)) {
     url <- ""
     interval_offset <- 0
@@ -138,8 +183,6 @@ get_data_collection <- function(endpoint = "http://envdata.tasman.govt.nz/data.h
     )
     interval_offset <- interval_to_offset(interval)
   }
-
-  # print(paste0("Datetime offset: ", interval_offset))
 
   if (!is.na(time_interval)) {
     url <- paste0(url, "&TimeInterval=", time_interval)
@@ -193,8 +236,36 @@ get_data_collection <- function(endpoint = "http://envdata.tasman.govt.nz/data.h
 }
 
 
-get_data_site_measurement <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?", site, measurement, method = NA, time_interval = NA, from = NA, to = NA, interval = "1 day", alignment = "00:00") {
-  # Function to get data for a measurement for a site.
+#' Get Hilltop Data for a Site and Measurement
+#'
+#' @description Function to get Data for a Site and Measurement from Hilltop Server.
+#' @param endpoint A url for the Hilltop endpoint.
+#' @param site A string for the site.
+#' @param measurement A string for the measurement.
+#' @param method A string for the statistic computed, currently only tested for Total, Average and Extrema.
+#' @param interval A string for the interval over which the "method" is calculated, e.g. "1 day".
+#' @param from A string for the start date.
+#' @param to A string for the end date.
+#' @param time_interval A string for the relative time, e.g. P1Y (Past 1 year). See Hilltop Server documentation
+#' @param alignment See Hilltop Server documentation.
+#' @return A tibble containing the data for each site comprising the collection.
+#' @examples
+#' get_data_site_measurement("http://envdata.tasman.govt.nz/data.hts?",
+#'       site = "AQ Richmond Central at Plunket", measurement = "PM2.5 (24 Hour)",
+#'       interval = "1 hour", from = "20220101", to = "202207031")
+#' get_data_site_measurement("http://envdata.tasman.govt.nz/data.hts?",
+#'       site = "HY Richmond Weather at TDC Roof", measurement = "Rainfall",
+#'       method = "Total", interval = "15 minutes", from = "20220101", to = "202207031")
+get_data_site_measurement <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?",
+                                      site,
+                                      measurement,
+                                      method = NA,
+                                      interval = "1 day",
+                                      from = NA,
+                                      to = NA,
+                                      time_interval = NA,
+                                      alignment = "00:00") {
+
   url <- paste0(
     endpoint,
     "Service=Hilltop&Request=GetData",
@@ -344,6 +415,7 @@ load_gaugings <- function(site, start_date, end_date) {
 
 
 ########## ENVMON ##########
+# to complete documentation
 get_site_information_envmon <- function(site) {
   # Function to read site information from envmon database.
   envmon_string <-
