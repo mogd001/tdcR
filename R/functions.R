@@ -130,7 +130,7 @@ convert_interval_to_offset <- function(interval) {
       c(n, int) %<-% unlist(str_split(interval, " "))
       interval_offset <- minutes(n)
     } else if (grepl("hour", interval)) {
-      offset <- hours(1)
+      interval_offset <- hours(1)
     } else if (grepl("day", interval)) {
       interval_offset <- days(1)
     } else if (grepl("month", interval)) {
