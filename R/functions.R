@@ -119,30 +119,30 @@ get_collections <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?"
 
 #' Interval function to correct for Hilltop's "right-bound" datetimes.
 #'
-#' @param interval a string.
+#' @param interval a string representing the interval e.g. "1 months".
 #' @noRd
-interval_to_offset <- function(interval) {
+convert_interval_to_offset <- function(interval) {
 
   if (!is.character(interval)) {
-    offset <- NA
+    interval_offset <- NA
   } else {
     if (grepl("minute", interval)) {
       c(n, int) %<-% unlist(str_split(interval, " "))
-      offset <- minutes(n)
+      interval_offset <- minutes(n)
     } else if (grepl("hour", interval)) {
       offset <- hours(1)
     } else if (grepl("day", interval)) {
-      offset <- days(1)
+      interval_offset <- days(1)
     } else if (grepl("month", interval)) {
-      offest <- months(1)
+      interval_offset <- months(1)
     } else if (grepl("year", interval)) {
-      offset <- years(1)
+      interval_offset <- years(1)
     } else {
-      offset <- NA
+      interval_offset <- NA
     }
   }
 
-  offset
+  interval_offset
 }
 
 
@@ -181,7 +181,7 @@ get_data_collection <- function(endpoint = "http://envdata.tasman.govt.nz/data.h
       "&Interval=", interval,
       "&Alignment=", alignment
     )
-    interval_offset <- interval_to_offset(interval)
+    interval_offset <- convert_interval_to_offset(interval)
   }
 
   if (!is.na(time_interval)) {
@@ -281,7 +281,7 @@ get_data_site_measurement <- function(endpoint = "http://envdata.tasman.govt.nz/
       "&Interval=", interval,
       "&Alignment=", alignment
     )
-    interval_offset <- interval_to_offset(interval)
+    interval_offset <- convert_interval_to_offset(interval)
   }
 
   if (!is.na(time_interval)) {
