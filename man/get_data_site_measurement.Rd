@@ -47,5 +47,5 @@ get_data_site_measurement("http://envdata.tasman.govt.nz/data.hts?",
       interval = "1 hour", from = "20220101", to = "202207031")
 get_data_site_measurement("http://envdata.tasman.govt.nz/data.hts?",
       site = "HY Richmond Weather at TDC Roof", measurement = "Rainfall",
-      method = "Total", interval = "15 minutes", from = "20220101", to = "202207031")
+      method = "Total", interval = "15 minutes", from = "20220101", to = "20220731")
 }
