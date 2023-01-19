@@ -222,17 +222,17 @@ get_data_collection <- function(endpoint = "http://envdata.tasman.govt.nz/data.h
       site = site,
       datetime = ymd_hms(T, tz = "Etc/GMT-12") - interval_offset,
       value = as.numeric(I1)
-    ) %>%
-    mutate(
-      year = year(datetime),
-      yday = yday(datetime),
-      month = month(datetime, label = TRUE),
-      year_month = floor_date(datetime, unit = "month"),
-      day = floor_date(datetime, unit = "day"),
-      day_hour = floor_date(datetime, unit = "hour"),
-      date = as_date(datetime),
-      time = as_hms(datetime)
-    )
+    ) # %>%
+    # mutate(
+    #   year = year(datetime),
+    #   yday = yday(datetime),
+    #   month = month(datetime, label = TRUE),
+    #   year_month = floor_date(datetime, unit = "month"),
+    #   day = floor_date(datetime, unit = "day"),
+    #   day_hour = floor_date(datetime, unit = "hour"),
+    #   date = as_date(datetime),
+    #   time = as_hms(datetime)
+    # )
 }
 
 
@@ -311,17 +311,17 @@ get_data_site_measurement <- function(endpoint = "http://envdata.tasman.govt.nz/
     transmute(
       datetime = ymd_hms(T, tz = "Etc/GMT-12") - interval_offset,
       value = as.numeric(I1)
-    ) %>%
-    mutate(
-      year = year(datetime),
-      yday = yday(datetime),
-      month = month(datetime, label = TRUE),
-      year_month = floor_date(datetime, unit = "month"),
-      day = floor_date(datetime, unit = "day"),
-      day_hour = floor_date(datetime, unit = "hour"),
-      date = as_date(datetime),
-      time = as_hms(datetime)
-    )
+    ) # %>%
+    # mutate(
+    #   year = year(datetime),
+    #   yday = yday(datetime),
+    #   month = month(datetime, label = TRUE),
+    #   year_month = floor_date(datetime, unit = "month"),
+    #   day = floor_date(datetime, unit = "day"),
+    #   day_hour = floor_date(datetime, unit = "hour"),
+    #   date = as_date(datetime),
+    #   time = as_hms(datetime)
+    # )
 }
 
 
