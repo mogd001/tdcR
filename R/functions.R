@@ -89,6 +89,8 @@ get_sites <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?",
     hilltop_df <- hilltop_df %>%
       left_join(second_synonym, by = "site")
   }
+
+  hilltop_df # return hilltop_df
 }
 
 
