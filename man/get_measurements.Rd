@@ -6,11 +6,14 @@
 \usage{
 get_measurements(
   endpoint = "http://envdata.tasman.govt.nz/data.hts?",
+  collection = NA,
   site = NA
 )
 }
 \arguments{
 \item{endpoint}{A url for the Hilltop endpoint.}
+
+\item{collection}{A string for the collection to return only measurements associated with that specific collection.}
 
 \item{site}{A string for the site so to return only measurements associated with that specific site.}
 }
@@ -22,5 +25,7 @@ Function to get Measurements from Hilltop Server.
 }
 \examples{
 get_measurements("http://envdata.tasman.govt.nz/data.hts?")
+get_measurements("http://envdata.tasman.govt.nz/data.hts?", collection = "Rainfall")
 get_measurements("http://envdata.tasman.govt.nz/data.hts?", site = "HY Anatoki at Happy Sams")
+get_measurements("http://envdata.tasman.govt.nz/data.hts?", collection = "Rainfall", site = "HY Anatoki at Happy Sams")
 }

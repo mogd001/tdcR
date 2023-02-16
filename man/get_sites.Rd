@@ -4,12 +4,24 @@
 \alias{get_sites}
 \title{Get Hilltop Sites}
 \usage{
-get_sites(endpoint = "http://envdata.tasman.govt.nz/data.hts?", latlong = TRUE)
+get_sites(
+  endpoint = "http://envdata.tasman.govt.nz/data.hts?",
+  latlong = TRUE,
+  collection = NA,
+  site_parameters = FALSE,
+  synonyms = FALSE
+)
 }
 \arguments{
 \item{endpoint}{A url for the Hilltop endpoint.}
 
 \item{latlong}{A logical, TRUE returns EPSG:4326 (WGS) coordinates , EPSG:2193 (NZTM) otherwise.}
+
+\item{collection}{A string for the collection to return only sites for that collection.}
+
+\item{site_parameters}{A logical, TRUE returns additional site parameters}
+
+\item{synonyms}{A logical, TRUE returns site synonyms}
 }
 \value{
 A tibble of sites and their corresponding coordinates.
@@ -20,4 +32,6 @@ Function to get Sites from Hilltop Server.
 \examples{
 get_sites("http://envdata.tasman.govt.nz/data.hts?")
 get_sites("http://envdata.tasman.govt.nz/data.hts?", latlong = FALSE)
+get_sites("http://envdata.tasman.govt.nz/data.hts?", collection = "Rainfall")
+get_sites("http://envdata.tasman.govt.nz/data.hts?", site_parameters = TRUE, synonyms = TRUE)
 }

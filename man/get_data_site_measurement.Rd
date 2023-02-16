@@ -43,9 +43,11 @@ Function to get Data for a Site and Measurement from Hilltop Server.
 }
 \examples{
 get_data_site_measurement("http://envdata.tasman.govt.nz/data.hts?",
-      site = "AQ Richmond Central at Plunket", measurement = "PM2.5 (24 Hour)",
-      interval = "1 hour", from = "20220101", to = "202207031")
+  site = "AQ Richmond Central at Plunket", measurement = "PM2.5 (24 Hour)",
+  interval = "1 hour", from = "20220101", to = "202207031"
+)
 get_data_site_measurement("http://envdata.tasman.govt.nz/data.hts?",
-      site = "HY Richmond Weather at TDC Roof", measurement = "Rainfall",
-      method = "Total", interval = "15 minutes", from = "20220101", to = "20220731")
+  site = "HY Richmond Weather at TDC Roof", measurement = "Rainfall",
+  method = "Total", interval = "15 minutes", from = "20220101", to = "20220731"
+)
 }

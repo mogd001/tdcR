@@ -39,8 +39,12 @@ A tibble containing the data for each site comprising the collection.
 Function to get Data for a Collection from Hilltop Server.
 }
 \examples{
-get_data_collection("http://envdata.tasman.govt.nz/data.hts?", collection = "Rainfall",
-      method = "Total", interval = "1 hour", from = "20220101", to = "202207031")
-get_data_collection("http://envdata.tasman.govt.nz/data.hts?", collection = "ActiveFlowSites",
-      method = "Extrema", interval = "15 minutes", from = "20220101", to = "202207031")
+get_data_collection("http://envdata.tasman.govt.nz/data.hts?",
+  collection = "Rainfall",
+  method = "Total", interval = "1 hour", from = "20220101", to = "202207031"
+)
+get_data_collection("http://envdata.tasman.govt.nz/data.hts?",
+  collection = "ActiveFlowSites",
+  method = "Extrema", interval = "15 minutes", from = "20220101", to = "202207031"
+)
 }
