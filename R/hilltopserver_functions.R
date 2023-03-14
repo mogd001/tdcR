@@ -1,8 +1,8 @@
-########## HILLTOP SERVER ##########
+########## HILLTOP SERVER FUNCTIONS ##########
 # A collection of wrapper functions for calling hilltop server commands and
-# returning dataframes for subsequent workflows.
+# returning tibbles for subsequent data workflows.
 
-#' Get Hilltop Sites
+#' Get Sites
 #'
 #' @description Function to get Sites from Hilltop Server.
 #' @param endpoint A url for the Hilltop endpoint.
@@ -94,7 +94,7 @@ get_sites <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?",
 }
 
 
-#' Get Hilltop Measurements
+#' Get Measurements
 #'
 #' @description Function to get Measurements from Hilltop Server.
 #' @param endpoint A url for the Hilltop endpoint.
@@ -133,7 +133,7 @@ get_measurements <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?
 }
 
 
-#' Get Hilltop Collections
+#' Get Collections
 #'
 #' @description Function to get Collections from Hilltop Server.
 #' @param endpoint A url for the Hilltop endpoint.
@@ -195,7 +195,7 @@ convert_interval_to_offset <- function(interval) {
 }
 
 
-#' Get Hilltop Data for a Collection
+#' Get Data for a Collection
 #'
 #' @description Function to get Data for a Collection from Hilltop Server.
 #' @param endpoint A url for the Hilltop endpoint.
@@ -274,21 +274,11 @@ get_data_collection <- function(endpoint = "http://envdata.tasman.govt.nz/data.h
       site = site,
       datetime = ymd_hms(T, tz = "Etc/GMT-12") - interval_offset,
       value = as.numeric(I1)
-    ) # %>%
-  # mutate(
-  #   year = year(datetime),
-  #   yday = yday(datetime),
-  #   month = month(datetime, label = TRUE),
-  #   year_month = floor_date(datetime, unit = "month"),
-  #   day = floor_date(datetime, unit = "day"),
-  #   day_hour = floor_date(datetime, unit = "hour"),
-  #   date = as_date(datetime),
-  #   time = as_hms(datetime)
-  # )
+    )
 }
 
 
-#' Get Hilltop Data for a Site and Measurement
+#' Get Data for a Site and Measurement
 #'
 #' @description Function to get Data for a Site and Measurement from Hilltop Server.
 #' @param endpoint A url for the Hilltop endpoint.
@@ -365,33 +355,30 @@ get_data_site_measurement <- function(endpoint = "http://envdata.tasman.govt.nz/
     transmute(
       datetime = ymd_hms(T, tz = "Etc/GMT-12") - interval_offset,
       value = as.numeric(I1)
-    ) # %>%
-  # mutate(
-  #   year = year(datetime),
-  #   yday = yday(datetime),
-  #   month = month(datetime, label = TRUE),
-  #   year_month = floor_date(datetime, unit = "month"),
-  #   day = floor_date(datetime, unit = "day"),
-  #   day_hour = floor_date(datetime, unit = "hour"),
-  #   date = as_date(datetime),
-  #   time = as_hms(datetime)
-  # )
+    )
 }
 
 
-load_ratings <- function(site, start_date, end_date) {
-  # Function to load ratings for a site.
-  endpoint <- "http://envdata.tasman.govt.nz/data.hts?"
-
-  measurement <- "Flow"
+#' Get Ratings for a Site
+#'
+#' @description Function to get Ratings for a Site from Hilltop Server.
+#' @param endpoint A url for the Hilltop endpoint.
+#' @param site A string for the site.
+#' @return A tibble containing the ratings for the site.
+#' @examples
+#' get_ratings("http://envdata.tasman.govt.nz/data.hts?",
+#'   site = "HY Aorere at Devils Boots"
+#' )
+get_ratings <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?",
+                        site) {
   url <-
     paste0(
       endpoint,
       "Service=Hilltop&Request=RatingList&Site=",
       gsub(" ", "%20", site),
-      "&Measurement=",
-      measurement
+      "&Measurement=Flow"
     )
+
   ratings <- as_tibble(as_list(read_xml(GET(url)))) %>%
     unnest_longer("HilltopServer")
 
@@ -399,7 +386,7 @@ load_ratings <- function(site, start_date, end_date) {
     filter(HilltopServer_id == "StartTime") %>%
     unnest(cols = names(.)) %>%
     unnest(cols = names(.)) %>%
-    mutate(datetime = as.POSIXct(HilltopServer, format = "%Y-%m-%dT%H:%M:%S", tz = "Etc/GMT-12")) %>% # ignore timezone, NZST
+    mutate(datetime = as.POSIXct(HilltopServer, format = "%Y-%m-%dT%H:%M:%S", tz = "Etc/GMT-12")) %>%
     rename(start_time = datetime) %>%
     select(start_time)
 
@@ -407,7 +394,7 @@ load_ratings <- function(site, start_date, end_date) {
     filter(HilltopServer_id == "EffectiveTime") %>%
     unnest(cols = names(.)) %>%
     unnest(cols = names(.)) %>%
-    mutate(datetime = as.POSIXct(HilltopServer, format = "%Y-%m-%dT%H:%M:%S", tz = "Etc/GMT-12")) %>% # ignore timezone, NZST
+    mutate(datetime = as.POSIXct(HilltopServer, format = "%Y-%m-%dT%H:%M:%S", tz = "Etc/GMT-12")) %>%
     rename(effective_time = datetime) %>%
     select(effective_time)
 
@@ -417,32 +404,34 @@ load_ratings <- function(site, start_date, end_date) {
       rating = as.double(row.names(.)),
       start_time = round_date(start_time, "5 mins"),
       effective_time = round_date(effective_time, "5 mins"),
-      date = as.Date(start_time, tz = "UTC"), # ignore timezone, NZST
+      date = as.Date(start_time, tz = "Etc/GMT-12"),
       origin = "rating-change"
-    ) %>%
-    filter(
-      date > as.Date(start_date, format = "%Y%m%d", tz = "Etc/GMT-12") & # ignore timezone, NZST
-        date < as.Date(end_date, format = "%Y%m%d", tz = "Etc/GMT-12") # ignore timezone, NZST
-    ) # filter ratings to analysis period
-
-  return(ratings)
+    )
 }
 
 
-load_gaugings <- function(site, start_date, end_date) {
-  # Function to load gaugings for a site.
-  endpoint <- "http://envdata.tasman.govt.nz/data.hts?"
-
-  measurement <- "Flow [Gauging Results]"
+#' Get Gaugings for a Site
+#'
+#' @description Function to get Gaugings for a Site from Hilltop Server.
+#' @param endpoint A url for the Hilltop endpoint.
+#' @param site A string for the site.
+#' @return A tibble containing the gaugings for the site.
+#' @examples
+#' get_gaugings("http://envdata.tasman.govt.nz/data.hts?",
+#'   site = "HY Aorere at Devils Boots"
+#' )
+get_gaugings <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?",
+                         site) {
   url <-
     paste0(
       endpoint,
       "Service=Hilltop&Request=GetData&Site=",
       gsub(" ", "%20", site),
       "&Measurement=",
-      gsub(" ", "%20", measurement),
+      gsub(" ", "%20", "Flow [Gauging Results]"),
       "&From=Sart&To=Now"
     )
+
   gaugings <- as_tibble(as_list(read_xml(GET(url)))) %>%
     unnest_longer("Hilltop") %>%
     filter(Hilltop_id == "Data") %>%
@@ -457,255 +446,6 @@ load_gaugings <- function(site, start_date, end_date) {
     mutate(
       gauging = row.names(.),
       datetime = round_date(datetime, "5 mins"),
-      date = as.Date(datetime, tz = "UTC"),
-    ) %>%
-    filter(
-      date > as.Date(start_date, format = "%Y%m%d", tz = "Etc/GMT-12") & # ignore timezone, NZST
-        date < as.Date(end_date, format = "%Y%m%d", tz = "Etc/GMT-12") # ignore timezone, NZST
-    ) # filter ratings to analysis period
-
-  return(gaugings)
-}
-
-
-########## ENVMON ##########
-# to complete documentation or to move to another location
-get_site_information_envmon <- function(site) {
-  # Function to read site information from envmon database.
-  envmon_string <-
-    "driver={SQL Server};server=TSRVSQL14;database=ENVMON;trusted_connection=true"
-  envmon <- odbcDriverConnect(envmon_string)
-  site_name_wrapped <- paste0("\'", site, "\'")
-  site_information <- sqlQuery(
-    envmon,
-    paste0(
-      "SELECT SiteID, Name, Easting, Northing, AuxName1, AuxName2, CatchmentArea, HIRDS
-     FROM Site",
-      " WHERE Name LIKE ",
-      site_name_wrapped
-    ),
-    stringsAsFactors = FALSE
-  ) %>%
-    rename(
-      site_id = SiteID,
-      site = Name,
-      easting = Easting,
-      northing = Northing,
-      first_synonym = AuxName1,
-      second_synonym = AuxName2,
-      catchment_area = CatchmentArea,
-      hirds_data = HIRDS
+      date = as.Date(datetime, tz = "Etc/GMT-12"),
     )
-  # close db connection
-  odbcClose(envmon)
-
-  return(site_information)
-}
-
-
-get_lab_data_envmon <- function() {
-  # Function to read lab data with site information for analysis from envmon database.
-  envmon_string <-
-    "driver={SQL Server};server=TSRVSQL14;database=ENVMON;trusted_connection=true"
-  envmon <- odbcDriverConnect(envmon_string)
-
-  site_information <- sqlQuery(envmon,
-    "SELECT SiteID, Name, Easting, Northing, AuxName1, AuxName2
-     FROM Site",
-    stringsAsFactors = FALSE
-  ) %>%
-    rename(
-      site_id = SiteID,
-      site = Name,
-      easting = Easting,
-      northing = Northing,
-      first_synonym = AuxName1,
-      second_synonym = AuxName2
-    )
-
-  lab_data <- sqlQuery(envmon,
-    "SELECT ResultNumber, SiteID, TestName, TestResultNumeric, NonDetect, TestUnits,
-    SampleTakenOn, SourceTable, TestNameGroup
-    FROM htsAllSiteData",
-    stringsAsFactors = FALSE
-  ) %>%
-    rename(
-      result_number = ResultNumber,
-      site_id = SiteID,
-      test_name = TestName,
-      test_result_numeric = TestResultNumeric,
-      non_detect = NonDetect,
-      test_units = TestUnits,
-      sample_taken_on = SampleTakenOn,
-      source_table = SourceTable,
-      test_name_group = TestNameGroup
-    )
-
-  # close db connection
-  odbcClose(envmon)
-
-  # join lab_data with site_information
-  lab_data <- lab_data %>%
-    left_join(site_information, by = "site_id")
-
-  return(lab_data)
-}
-
-
-get_bore_data_envmon <- function() {
-  # Function to read the bore data from envmon database.
-  envmon_string <-
-    "driver={SQL Server};server=TSRVSQL14;database=ENVMON;trusted_connection=true"
-  envmon <- odbcDriverConnect(envmon_string)
-
-  bore_information <- sqlQuery(envmon,
-    "SELECT BoreID, Bore_No, Bore_Sort_No, Grid_Ref, Easting, Northing, ZoneID,
-    LocationDetID, Bore_Depth, Bore_Diameter_1,
-    Bore_Diameter_2, Ground_Level, Ground_Level_NZVD2016, Rim_Level, Rim_Level_NZVD2016,
-    Level_Book, Yield, Duration, Drawdown, Specific_Capacity, Driller, Drilling_Date, Driller_Log_ID,
-    StatusID, PumpTypeID, BoreTypeID, TypeDevID,
-    CasingType, CasingDiameter, CasingLength, CollarSet, Screen_1_Set,
-    Screen_Type_1, Slot_Size_1, Screen_2_Set, Screen_Type_2, Slot_Size_2, Screen_3_Set, Screen_Type_3,
-    Slot_Size_3, SumpSet,
-    Bore_Log, Access_To_Bore, Access_To_Water, Point_Of_Measurement_To_Ground, ValNum,
-    DateCreated, Verify, VerifiedBy, VerifyDate, Dead
-    FROM tbl_Bores WHERE Dead IS NULL or Dead = 0",
-    stringsAsFactors = FALSE
-  ) %>%
-    rename(
-      bore_id = BoreID,
-      bore_no = Bore_No,
-      bore_sort_no = Bore_Sort_No,
-      grid_ref = Grid_Ref,
-      easting = Easting,
-      northing = Northing,
-      zone_id = ZoneID,
-      location_det_id = LocationDetID,
-      bore_depth = Bore_Depth,
-      bore_diameter_1 = Bore_Diameter_1,
-      bore_diameter_2 = Bore_Diameter_2,
-      ground_level = Ground_Level,
-      ground_level_nzvd2016 = Ground_Level_NZVD2016,
-      rim_level = Rim_Level,
-      rim_level_nzvd2016 = Rim_Level_NZVD2016,
-      level_book = Level_Book,
-      yield = Yield,
-      duration = Duration,
-      drawdown = Drawdown,
-      specific_capacity = Specific_Capacity,
-      driller = Driller,
-      drilling_date = Drilling_Date,
-      driller_log_id = Driller_Log_ID,
-      status_id = StatusID,
-      pump_type_id = PumpTypeID,
-      bore_type_id = BoreTypeID,
-      type_dev_id = TypeDevID,
-      casing_type = CasingType,
-      casing_diameter = CasingDiameter,
-      casing_length = CasingLength,
-      collar_set = CollarSet,
-      screen_1_set = Screen_1_Set,
-      screen_type_1 = Screen_Type_1,
-      slot_size_1 = Slot_Size_1,
-      screen_2_set = Screen_2_Set,
-      screen_type_2 = Screen_Type_2,
-      slot_size_2 = Slot_Size_2,
-      screen_3_set = Screen_3_Set,
-      screen_type_3 = Screen_Type_3,
-      slot_size_3 = Slot_Size_3,
-      sump_set = SumpSet,
-      bore_log = Bore_Log,
-      access_to_bore = Access_To_Bore,
-      access_to_walker = Access_To_Water,
-      point_of_measurement_to_ground = Point_Of_Measurement_To_Ground,
-      val_num = ValNum,
-      date_created = DateCreated,
-      verify = Verify,
-      verified_by = VerifiedBy,
-      verifiy_date = VerifyDate,
-      dead = Dead
-    )
-
-  site_bore <- sqlQuery(
-    envmon,
-    "SELECT BoreID, SiteID
-    FROM vw_BoreSite"
-  ) %>%
-    rename(
-      bore_id = BoreID,
-      site_id = SiteID
-    )
-
-  odbcClose(envmon)
-
-  # get aquifer information
-  ncs_string <-
-    "driver={SQL Server};server=TSRVSQL14;database=NCS;trusted_connection=true"
-  ncs <- odbcDriverConnect(ncs_string)
-
-  bore_aquifer <- sqlQuery(
-    ncs,
-    "SELECT BoreID, PrimaryUse, AquiferName FROM GIS.vw_LawaBores"
-  ) %>%
-    rename(
-      bore_id = BoreID,
-      primary_use = PrimaryUse,
-      aquifer = AquiferName,
-    )
-
-  odbcClose(ncs)
-
-  bore_information <- bore_information %>%
-    left_join(site_bore, by = "bore_id") %>%
-    left_join(bore_aquifer, by = "bore_id")
-
-  return(bore_information)
-}
-
-
-tabulate_hirds_data_string <- function(data_string) {
-  # Function to map HIRDS string saved in ENVMON database to tibble.
-  col_names <-
-    c(
-      "ari",
-      "dur_10min",
-      "dur_20min",
-      "dur_30min",
-      "dur_1hour",
-      "dur_2hour",
-      "dur_6hour",
-      "dur_12hour",
-      "dur_1day",
-      "dur_2day",
-      "dur_3day",
-      "dur_4day",
-      "dur_5day"
-    )
-
-  # split string according to \r\n rows, then convert rows to double and create dataframe.
-  rows <- strsplit(data_string, "\r\n")[[1]]
-
-  n_col <- 0
-  for (row in rows) {
-    x <- as.double(unlist(strsplit(row, ",")))
-    if (n_col == 0) {
-      n_col <- length(x)
-      v <- x
-    } else {
-      v <- append(v, x)
-    }
-  }
-  m <- matrix(v, nrow = length(v) / n_col, ncol = n_col, byrow = TRUE)
-
-  # add empty columns to m if longer return periods are not defined
-  if (n_col < length(col_names)) {
-    for (i in 1:(length(col_names) - n_col)) {
-      m <- cbind(m, rep(NA, length(m[, 1])))
-    }
-  }
-
-  hirds_df <- as_tibble(m) %>%
-    setNames(col_names)
-
-  return(hirds_df)
 }
