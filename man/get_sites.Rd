@@ -19,9 +19,9 @@ get_sites(
 
 \item{collection}{A string for the collection to return only sites for that collection.}
 
-\item{site_parameters}{A logical, TRUE returns additional site parameters}
+\item{site_parameters}{A logical, TRUE returns additional site parameters.}
 
-\item{synonyms}{A logical, TRUE returns site synonyms}
+\item{synonyms}{A logical, TRUE returns site synonyms.}
 }
 \value{
 A tibble of sites and their corresponding coordinates.

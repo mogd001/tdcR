@@ -8,8 +8,8 @@
 #' @param endpoint A url for the Hilltop endpoint.
 #' @param latlong A logical, TRUE returns EPSG:4326 (WGS) coordinates , EPSG:2193 (NZTM) otherwise.
 #' @param collection A string for the collection to return only sites for that collection.
-#' @param site_parameters A logical, TRUE returns additional site parameters
-#' @param synonyms A logical, TRUE returns site synonyms
+#' @param site_parameters A logical, TRUE returns additional site parameters.
+#' @param synonyms A logical, TRUE returns site synonyms.
 #' @return A tibble of sites and their corresponding coordinates.
 #' @examples
 #' get_sites("http://envdata.tasman.govt.nz/data.hts?")
@@ -64,7 +64,7 @@ get_sites <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?",
       data = as.numeric(unlist(HilltopServer))
     ) %>%
     filter(
-      !is.na(src)
+      !is.na(src) & !is.na(data)
     ) %>%
     pivot_wider(
       names_from = src,

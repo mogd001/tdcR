@@ -13,7 +13,6 @@ Imports:
     tidyr,
     dplyr,
     lubridate,
-    hms,
     XML,
     xml2,
     httr,
