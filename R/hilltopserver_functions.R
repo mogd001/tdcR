@@ -378,6 +378,7 @@ get_ratings <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?",
       gsub(" ", "%20", site),
       "&Measurement=Flow"
     )
+  print(url)
 
   ratings <- as_tibble(as_list(read_xml(GET(url)))) %>%
     unnest_longer("HilltopServer")
@@ -386,16 +387,14 @@ get_ratings <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?",
     filter(HilltopServer_id == "StartTime") %>%
     unnest(cols = names(.)) %>%
     unnest(cols = names(.)) %>%
-    mutate(datetime = as.POSIXct(HilltopServer, format = "%Y-%m-%dT%H:%M:%S", tz = "Etc/GMT-12")) %>%
-    rename(start_time = datetime) %>%
+    mutate(start_time = ymd_hms(HilltopServer, tz = "Etc/GMT-12", quiet = TRUE)) %>%
     select(start_time)
 
   effectivetimes <- ratings %>%
     filter(HilltopServer_id == "EffectiveTime") %>%
     unnest(cols = names(.)) %>%
     unnest(cols = names(.)) %>%
-    mutate(datetime = as.POSIXct(HilltopServer, format = "%Y-%m-%dT%H:%M:%S", tz = "Etc/GMT-12")) %>%
-    rename(effective_time = datetime) %>%
+    mutate(effective_time = ymd_hms(HilltopServer, tz = "Etc/GMT-12", quiet = TRUE)) %>%
     select(effective_time)
 
   ratings <- tibble(starttimes, effectivetimes) %>%
@@ -431,21 +430,23 @@ get_gaugings <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?",
       gsub(" ", "%20", "Flow [Gauging Results]"),
       "&From=Sart&To=Now"
     )
+  print(url)
 
   gaugings <- as_tibble(as_list(read_xml(GET(url)))) %>%
     unnest_longer("Hilltop") %>%
     filter(Hilltop_id == "Data") %>%
     select(Hilltop) %>%
     unnest(cols = names(.)) %>%
+    unnest_wider("Hilltop") %>%
     unnest(cols = names(.)) %>%
     unnest(cols = names(.)) %>%
-    unnest(cols = names(.)) %>%
-    mutate(datetime = as.POSIXct(Hilltop, format = "%Y-%m-%dT%H:%M:%S", tz = "Etc/GMT-12")) %>%
-    select(c(datetime)) %>%
-    drop_na(datetime) %>%
-    mutate(
-      gauging = row.names(.),
-      datetime = round_date(datetime, "5 mins"),
-      date = as.Date(datetime, tz = "Etc/GMT-12"),
+    transmute(
+      site = site,
+      datetime = ymd_hms(T, tz = "Etc/GMT-12"),
+      stage = as.numeric(I1),
+      flow = as.numeric(I2),
+      area = as.numeric(I3),
+      velocity = as.numeric(I4),
+      max_depth = as.numeric(I5)
     )
 }
