@@ -1,3 +1,3 @@
-library(devtools)
-options(download.file.method = "wininet")
+library(remotes)
+Sys.unsetenv("GITHUB_PAT")
 remotes::install_github("mogd001/tdcR")
