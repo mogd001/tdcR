@@ -167,34 +167,6 @@ get_collections <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?"
 }
 
 
-#' Interval function to correct for Hilltop's "right-bound" datetimes.
-#'
-#' @param interval a string representing the interval e.g. "1 months".
-#' @noRd
-convert_interval_to_offset <- function(interval) {
-  if (!is.character(interval)) {
-    interval_offset <- NA
-  } else {
-    if (grepl("minute", interval)) {
-      c(n, int) %<-% unlist(str_split(interval, " "))
-      interval_offset <- minutes(n)
-    } else if (grepl("hour", interval)) {
-      interval_offset <- hours(1)
-    } else if (grepl("day", interval)) {
-      interval_offset <- days(1)
-    } else if (grepl("month", interval)) {
-      interval_offset <- months(1)
-    } else if (grepl("year", interval)) {
-      interval_offset <- years(1)
-    } else {
-      interval_offset <- NA
-    }
-  }
-
-  interval_offset
-}
-
-
 #' Get Data for a Collection
 #'
 #' @description Function to get Data for a Collection from Hilltop Server.
@@ -224,16 +196,12 @@ get_data_collection <- function(endpoint = "http://envdata.tasman.govt.nz/data.h
                                 to = NA,
                                 time_interval = NA,
                                 alignment = "00:00") {
-  if (is.na(method)) {
-    url <- ""
-    interval_offset <- 0
-  } else {
+  if (!is.na(method)) {
     url <- paste0(
       "&Method=", method,
       "&Interval=", interval,
       "&Alignment=", alignment
     )
-    interval_offset <- convert_interval_to_offset(interval)
   }
 
   if (!is.na(time_interval)) {
@@ -272,7 +240,7 @@ get_data_collection <- function(endpoint = "http://envdata.tasman.govt.nz/data.h
     unnest(cols = names(.)) %>%
     transmute(
       site = site,
-      datetime = ymd_hms(T, tz = "Etc/GMT-12") - interval_offset,
+      datetime = ymd_hms(T, tz = "Etc/GMT-12"),
       value = as.numeric(I1)
     )
 }
@@ -316,16 +284,13 @@ get_data_site_measurement <- function(endpoint = "http://envdata.tasman.govt.nz/
     "&Measurement=", measurement
   )
 
-  if (is.na(method)) {
-    interval_offset <- 0
-  } else {
+  if (!is.na(method)) {
     url <- paste0(
       url,
       "&Method=", method,
       "&Interval=", interval,
       "&Alignment=", alignment
     )
-    interval_offset <- convert_interval_to_offset(interval)
   }
 
   if (!is.na(time_interval)) {
@@ -353,7 +318,7 @@ get_data_site_measurement <- function(endpoint = "http://envdata.tasman.govt.nz/
     unnest(cols = names(.)) %>%
     unnest(cols = names(.)) %>%
     transmute(
-      datetime = ymd_hms(T, tz = "Etc/GMT-12") - interval_offset,
+      datetime = ymd_hms(T, tz = "Etc/GMT-12"),
       value = as.numeric(I1)
     )
 }

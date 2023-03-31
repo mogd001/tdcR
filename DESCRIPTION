@@ -1,7 +1,7 @@
 Package: tdcR
 Type: Package
 Title: General TDC R Functions
-Version: 0.1.5
+Version: 0.1.6
 Author: Matt Ogden
 Maintainer: Matt Ogden <matt.ogden@tasman.govt.nz>
 Description: Pulling data from Hilltop Server and Envmon.
