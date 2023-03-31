@@ -1,6 +1,6 @@
 # tdcR
 General purpose package for data importing for workflows. 
-Primarily interacting with Hilltop Server in subsequently visualise and analyse environmental data.
+Primarily interacting with Hilltop Server to subsequently visualise and analyse environmental data.
 
 ![](./man/tdcR.png)
 
