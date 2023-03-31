@@ -196,8 +196,15 @@ get_data_collection <- function(endpoint = "http://envdata.tasman.govt.nz/data.h
                                 to = NA,
                                 time_interval = NA,
                                 alignment = "00:00") {
+  url <- paste0(
+    endpoint,
+    "Service=Hilltop&Request=GetData&Collection=",
+    collection
+  )
+
   if (!is.na(method)) {
     url <- paste0(
+      url,
       "&Method=", method,
       "&Interval=", interval,
       "&Alignment=", alignment
@@ -211,14 +218,6 @@ get_data_collection <- function(endpoint = "http://envdata.tasman.govt.nz/data.h
   } else {
     url <- paste0(url, "&TimeInterval=", "P1D")
   }
-
-  url <-
-    paste0(
-      endpoint,
-      "Service=Hilltop&Request=GetData&Collection=",
-      collection,
-      url
-    )
 
   url <- gsub(" ", "%20", url)
   print(url)
