@@ -2,6 +2,43 @@
 # A collection of wrapper functions for calling hilltop server commands and
 # returning tibbles for subsequent data workflows.
 
+
+#' Get Hilltop Server Version
+#'
+#' @description Function to get Hilltop Server Version.
+#' @param endpoint A url for the Hilltop endpoint.
+#' @return Version text.
+#' @examples
+#' get_version("http://envdata.tasman.govt.nz/data.hts?")
+get_version <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?") {
+  url <- paste0(endpoint, "Service=Hilltop&Request=Version")
+  print(url)
+
+  hilltop_data <- read_xml(url)
+  version <- hilltop_data %>% xml_text("Status")
+
+  print(version)
+}
+
+
+#' Reset Hilltop Server
+#'
+#' @description Function to send reset command to Hilltop Server.
+#' @param endpoint A url for the Hilltop endpoint.
+#' @return Version text.
+#' @examples
+#' get_version("http://envdata.tasman.govt.nz/data.hts?")
+reset_hilltop_server <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?") {
+  url <- paste0(endpoint, "Service=Hilltop&Request=Reset")
+  print(url)
+
+  hilltop_data <- read_xml(url)
+  status <- hilltop_data %>% xml_text("Status")
+
+  print(status)
+}
+
+
 #' Get Sites
 #'
 #' @description Function to get Sites from Hilltop Server.
@@ -124,12 +161,47 @@ get_measurements <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?
   hilltop_data <- read_xml(url)
 
   if (is.na(site) | (!is.na(collection) & !is.na(site))) {
-    measurements <- xml_find_all(hilltop_data, "Measurement") %>% xml_attr("Name")
+    measurements <- xml_find_all(hilltop_data, "Measurement") %>% xml_attr("Name") # all measurements
+    hilltop_df <- tibble(measurement = measurements)
   } else {
-    measurements <- xml_find_all(hilltop_data, "DataSource") %>% xml_attr("Name")
-  }
 
-  hilltop_df <- tibble(measurement = measurements)
+    data_sources <- xml_find_all(hilltop_data, "DataSource") %>% xml_attr("Name")
+    measurements <- xpathSApply(xmlParse(hilltop_data), "//Measurement", xmlGetAttr, "Name")
+
+    hilltop_df <- hilltop_data %>%
+      as_list() %>%
+      as_tibble() %>%
+      slice(-1) %>% # Remove agency
+      transmute(data_source = data_sources, data = HilltopServer)
+
+    ds_data <- hilltop_df %>%
+      unnest_longer("data")
+
+    num_items <- ds_data %>% filter(data_id %in% c("NumItems")) %>% select(data) %>% unlist()
+    ts_type <- ds_data %>% filter(data_id %in% c("TSType")) %>% select(data) %>% unlist()
+    data_type <- ds_data %>% filter(data_id %in% c("DataType")) %>% select(data) %>% unlist()
+    interpolation <- ds_data %>% filter(data_id %in% c("Interpolation")) %>% select(data) %>% unlist()
+    item_format <- ds_data %>% filter(data_id %in% c("ItemFormat")) %>% select(data) %>% unlist()
+    from <- ds_data %>% filter(data_id %in% c("From")) %>% select(data) %>% unlist()
+    to <- ds_data %>% filter(data_id %in% c("To")) %>% select(data) %>% unlist()
+
+    hilltop_df <- hilltop_df %>% mutate(
+      num_items = as.numeric(num_items),
+      ts_type = ts_type,
+      data_type = data_type,
+      interpolation = interpolation,
+      item_format = as.numeric(item_format),
+      from = ymd_hms(from, tz = "Etc/GMT-12"),
+      to = ymd_hms(to, tz = "Etc/GMT-12")
+    )
+
+    ds_data <- hilltop_df %>%
+      unnest_longer("data") %>%
+      filter(data_id == "Measurement") %>%
+      mutate(measurement = measurements) %>%
+      select(-c(data, data_id)) %>%
+      relocate(measurement)
+  }
 }
 
 
