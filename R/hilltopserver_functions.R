@@ -25,9 +25,9 @@ get_version <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?") {
 #'
 #' @description Function to send reset command to Hilltop Server.
 #' @param endpoint A url for the Hilltop endpoint.
-#' @return Version text.
+#' @return Reset text.
 #' @examples
-#' get_version("http://envdata.tasman.govt.nz/data.hts?")
+#' reset_hilltop_server("http://envdata.tasman.govt.nz/data.hts?")
 reset_hilltop_server <- function(endpoint = "http://envdata.tasman.govt.nz/data.hts?") {
   url <- paste0(endpoint, "Service=Hilltop&Request=Reset")
   print(url)
